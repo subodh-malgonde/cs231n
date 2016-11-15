@@ -270,6 +270,9 @@ class FullyConnectedNet(object):
                                                    self.params['gamma%d' % i], self.params['beta%d' % i], self.bn_params[i-1])
         else:
           a, cache = affine_relu_forward(a, self.params['W%d' % i], self.params['b%d' % i])
+        if self.use_dropout:
+          a, dropout_cache = dropout_forward(a, self.dropout_param)
+          cache = (cache, dropout_cache)
       caches.append(cache)
       i += 1
     ############################################################################
@@ -306,10 +309,15 @@ class FullyConnectedNet(object):
       if i == self.num_layers:
         dout, grads['W%d' % i], grads['b%d' % i] = affine_backward(dout, caches[i-1])
       else:
-        if self.use_batchnorm:
-          dout, grads['W%d' % i], grads['b%d' % i], grads['gamma%d' % i], grads['beta%d' % i] = affine_batchnorm_relu_backward(dout, caches[i-1])
+        if self.use_dropout:
+          intermediate_cache, dropout_cache = caches[i-1]
+          dout = dropout_backward(dout, dropout_cache)
         else:
-          dout, grads['W%d' % i], grads['b%d' % i] = affine_relu_backward(dout, caches[i-1])
+          intermediate_cache = caches[i-1]
+        if self.use_batchnorm:
+          dout, grads['W%d' % i], grads['b%d' % i], grads['gamma%d' % i], grads['beta%d' % i] = affine_batchnorm_relu_backward(dout, intermediate_cache)
+        else:
+          dout, grads['W%d' % i], grads['b%d' % i] = affine_relu_backward(dout, intermediate_cache)
 
       # regularization components of gradient
       grads['W%d' % i] += self.reg * self.params['W%d' % i]

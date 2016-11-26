@@ -166,7 +166,7 @@ class ThreeLayerConvNet(object):
     return loss, grads
 
 
-class FourlayerLayerConvNet(object):
+class FourLayerConvNet(object):
   """
   A three-layer convolutional network with the following architecture:
 
@@ -231,10 +231,10 @@ class FourlayerLayerConvNet(object):
     self.params['b3'] = np.random.normal(0, weight_scale, (hidden_dim,))
 
     if self.use_batchnorm:
-      self.params['gamma1'] = np.ones(num_filters, )
-      self.params['beta1'] = np.zeros(num_filters)
-      self.params['gamma2'] = np.ones(hidden_dim, )
-      self.params['beta2'] = np.zeros(hidden_dim, )
+      self.params['gamma1'] = np.ones(num_filters[0], )
+      self.params['beta1'] = np.zeros(num_filters[0])
+      self.params['gamma2'] = np.ones(num_filters[1], )
+      self.params['beta2'] = np.zeros(num_filters[1], )
       self.params['gamma3'] = np.ones(hidden_dim, )
       self.params['beta3'] = np.zeros(hidden_dim, )
       self.bn_params = [{'mode': 'train'} for i in xrange(3)]

@@ -232,8 +232,9 @@ class CaptioningRNN(object):
 
     for i in xrange(N):
       prev_h = prev_h_[i]
-      prev_h = np.reshape(prev_h, (1, prev_h.shape[0]))
-      prev_c = np.zeros_like(prev_h)
+      if self.cell_type == "lstm":
+        prev_h = np.reshape(prev_h, (1, prev_h.shape[0]))
+        prev_c = np.zeros_like(prev_h)
       previous_word_index = self._start
       for j in xrange(max_length):
         x = W_embed[previous_word_index]

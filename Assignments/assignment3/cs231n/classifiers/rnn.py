@@ -143,7 +143,10 @@ class CaptioningRNN(object):
     x, word_embedding_cache = word_embedding_forward(captions_in, W_embed)
 
     # compute hidden state for all layers Nx(T-1)xhidden_dim
-    h, rnn_cache = rnn_forward(x, h0, Wx, Wh, b)
+    if self.cell_type == "rnn":
+      h, rnn_cache = rnn_forward(x, h0, Wx, Wh, b)
+    else:
+      h, lstm_cache = lstm_forward(x, h0, Wx, Wh, b)
 
     #compute affine scores for each time layer Nx(T-1)XW
     scores, temporal_affine_cache = temporal_affine_forward(h, W_vocab, b_vocab)
@@ -153,7 +156,10 @@ class CaptioningRNN(object):
 
     dh, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dout, temporal_affine_cache)
 
-    dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dh, rnn_cache)
+    if self.cell_type == "rnn":
+      dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dh, rnn_cache)
+    else:
+      dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(dh, lstm_cache)
 
     grads['W_embed'] = word_embedding_backward(dx, word_embedding_cache)
 
@@ -226,10 +232,15 @@ class CaptioningRNN(object):
 
     for i in xrange(N):
       prev_h = prev_h_[i]
+      prev_h = np.reshape(prev_h, (1, prev_h.shape[0]))
+      prev_c = np.zeros_like(prev_h)
       previous_word_index = self._start
       for j in xrange(max_length):
         x = W_embed[previous_word_index]
-        h, cache = rnn_step_forward(x, prev_h, Wx, Wh, b)
+        if self.cell_type == "rnn":
+          h, cache = rnn_step_forward(x, prev_h, Wx, Wh, b)
+        else:
+          h, prev_c, cache = lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b)
         scores = h.dot(W_vocab) + b_vocab
         previous_word_index = np.argmax(scores)
         captions[i,j] = previous_word_index
